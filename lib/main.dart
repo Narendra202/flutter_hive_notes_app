@@ -1,5 +1,4 @@
 import 'package:crud_app_using_hivedb/HomeScreen.dart';
-import 'package:crud_app_using_hivedb/hello.dart';
 import 'package:crud_app_using_hivedb/models/notes_model.dart';
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
