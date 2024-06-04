@@ -19,17 +19,26 @@ class _HomeScreenState extends State<HomeScreen> {
 
   final  titleController = TextEditingController();
   final  descriptionController = TextEditingController();
+  late final Box box;
 
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    box = Hive.box<NotesModel>('notes');
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text('CRUD APP',style: TextStyle(color: Colors.white,fontSize: 20,fontWeight: FontWeight.w500),),backgroundColor: Colors.blue,centerTitle: true,),
-      body: ValueListenableBuilder<Box<NotesModel>>(
-        valueListenable: Boxes.getData().listenable(),
+      body: ValueListenableBuilder(
+        valueListenable: box.listenable(),
         builder: (context, box, _){
           var data = box.values.toList().cast<NotesModel>();
           return ListView.builder(
+              // reverse: true,
+              // shrinkWrap: true,
               itemCount: box.length,
               itemBuilder:(context, index){
               return Card(
@@ -39,8 +48,25 @@ class _HomeScreenState extends State<HomeScreen> {
                     mainAxisAlignment: MainAxisAlignment.start,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Text(data[index].title.toString()),
-                      // Text(data[index].description.toString())
+                      Row(
+                        children: [
+                          Text(data[index].title.toString()),
+                          Spacer(),
+                          InkWell(
+                              onTap: (){
+                                delete(data[index]);
+                              },
+                              child: Icon(Icons.delete,color: Colors.red,)),
+                          SizedBox(width: 15,),
+                          InkWell(
+                              onTap: (){
+                                _editDialog(data[index],data[index].title.toString(),data[index].description.toString());
+                              },
+                              child: Icon(Icons.edit))
+
+                        ],
+                      ),
+                      Text(data[index].description.toString())
                     ],
                   ),
                 ),
@@ -58,6 +84,64 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
+
+  void delete(NotesModel notesModel) async {
+    await notesModel.delete();
+  }
+
+  Future<void> _editDialog(NotesModel notesModel, String title, String description) async{
+
+    titleController.text = title;
+    descriptionController.text = description;
+    return showDialog(
+        context: context,
+        builder: (context){
+          return AlertDialog(
+            title: Text('Edit Notes'),
+            content: SingleChildScrollView(
+              child: Column(
+                children: [
+                  TextFormField(
+                    controller: titleController,
+                    decoration: InputDecoration(
+                        hintText: 'Enter Title',
+                        border: OutlineInputBorder()
+                    ),
+                  ),
+                  SizedBox(height: 20,),
+
+                  TextFormField(
+                    controller: descriptionController,
+                    decoration: InputDecoration(
+                        hintText: 'Enter Description',
+                        border: OutlineInputBorder()
+                    ),
+                  )
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(onPressed: (){
+                Navigator.pop(context);
+              },
+                  child: Text('Cancel')
+              ),
+              TextButton(onPressed: () async{
+
+                notesModel.title = titleController.text.toString();
+                notesModel.description = descriptionController.text.toString();
+
+                notesModel.save();
+                titleController.clear();
+                descriptionController.clear();
+                Navigator.pop(context);
+              }, child: Text('Edit'))
+            ],
+          );
+        }
+    );
+  }
+
 
   Future<void> _showMyDialog() async{
     return showDialog(
@@ -95,10 +179,10 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               TextButton(onPressed: (){
                 final data = NotesModel(title: titleController.text, description: descriptionController.text);
-                final box = Boxes.getData();
+                // final box = Boxes.getData();
                 // final box = Hive.box<NotesModel>('notes');
                 box.add(data);
-                data.save();
+                // data.save();
                 titleController.clear();
                 descriptionController.clear();
                 Navigator.pop(context);
@@ -109,3 +193,4 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 }
+
